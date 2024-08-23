@@ -5,6 +5,7 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class JokeProvider extends ChangeNotifier {
   final List<String> _favorites = [];
@@ -467,35 +468,40 @@ class AboutScreen extends StatelessWidget {
                 title:
                     const Text('About', style: TextStyle(color: Colors.white)),
               ),
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: Padding(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: GlassCard(
                       child: Padding(
-                        padding: EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
+                            const Text(
                               'Jokes For All',
                               style: TextStyle(
                                   fontSize: 24,
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold),
                             ),
-                            SizedBox(height: 20),
-                            Text(
+                            const SizedBox(height: 20),
+                            const Text(
                               'Jokes For All is your go-to app for a daily dose of laughter. Enjoy a curated collection of hilarious jokes, save your favorites, and share the joy with friends and family.',
                               style:
                                   TextStyle(fontSize: 16, color: Colors.white),
                               textAlign: TextAlign.center,
                             ),
-                            SizedBox(height: 20),
-                            Text(
-                              '© 2023 Jokes For All',
+                            const SizedBox(height: 20),
+                            const Text(
+                              '© 2024 Jokes For All',
                               style: TextStyle(
                                   fontSize: 14, color: Colors.white70),
+                            ),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () => _showSettingsDialog(context),
+                              child: const Text('Settings'),
                             ),
                           ],
                         ),
@@ -506,6 +512,69 @@ class AboutScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('About'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Privacy Policy'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _openWebView(
+                      context, 'Privacy Policy', 'https://google.com/');
+                },
+              ),
+              ListTile(
+                title: const Text('Terms and Conditions'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _openWebView(
+                      context, 'Terms and Conditions', 'https://google.com/');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _openWebView(BuildContext context, String title, String url) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => WebViewPage(title: title, url: url),
+      ),
+    );
+  }
+}
+
+class WebViewPage extends StatelessWidget {
+  final String title;
+  final String url;
+
+  const WebViewPage({super.key, required this.title, required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+        ),
+        body: WebViewWidget(
+          controller: WebViewController()
+            ..loadRequest(Uri.parse(url))
+            ..setJavaScriptMode(JavaScriptMode.unrestricted),
         ),
       ),
     );
