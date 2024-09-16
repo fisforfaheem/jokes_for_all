@@ -1,11 +1,53 @@
 // main.dart
+// ignore_for_file: deprecated_member_use, library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+import 'package:introduction_screen/introduction_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class OnboardingScreen extends StatelessWidget {
+  const OnboardingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IntroductionScreen(
+      pages: [
+        PageViewModel(
+          title: "Welcome to Jokes For All",
+          body: "Get ready for a daily dose of laughter!",
+          image: const Center(child: Icon(Icons.emoji_emotions, size: 100.0)),
+        ),
+        PageViewModel(
+          title: "Random Jokes",
+          body: "Tap to get a random joke anytime.",
+          image: const Center(child: Icon(Icons.shuffle, size: 100.0)),
+        ),
+        PageViewModel(
+          title: "Favorites",
+          body: "Save your favorite jokes for later.",
+          image: const Center(child: Icon(Icons.favorite, size: 100.0)),
+        ),
+      ],
+      showSkipButton: true,
+      skip: const Text("Skip"),
+      next: const Text("Next"),
+      done: const Text("Done"),
+      onDone: () async {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('seen_onboarding', true);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const JokesForAll()),
+        );
+      },
+    );
+  }
+}
 
 class JokeProvider extends ChangeNotifier {
   final List<String> _favorites = [];
@@ -26,13 +68,35 @@ class JokeProvider extends ChangeNotifier {
   }
 }
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool seenOnboarding = prefs.getBool('seen_onboarding') ?? false;
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => JokeProvider(),
-      child: const JokesForAll(),
+      child: MyApp(seenOnboarding: seenOnboarding),
     ),
   );
+}
+
+class MyApp extends StatelessWidget {
+  final bool seenOnboarding;
+
+  const MyApp({super.key, required this.seenOnboarding});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Jokes For All',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        textTheme: GoogleFonts.poppinsTextTheme(),
+      ),
+      home: seenOnboarding ? const JokesForAll() : const OnboardingScreen(),
+    );
+  }
 }
 
 class JokesForAll extends StatelessWidget {
@@ -369,12 +433,6 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // This is a placeholder. In a real app, you'd fetch favorites from storage.
-    // final List<String> favorites = [
-    //   "Why don't scientists trust atoms? Because they make up everything!",
-    //   "Why did the scarecrow win an award? He was outstanding in his field!",
-    // ];
-
     final jokeProvider = Provider.of<JokeProvider>(context);
     final favorites = jokeProvider.favorites;
     return Scaffold(
