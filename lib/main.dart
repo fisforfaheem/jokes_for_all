@@ -3,9 +3,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:jokes_for_all/faq.dart';
+import 'package:jokes_for_all/splash.dart';
 import 'dart:ui';
 
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:introduction_screen/introduction_screen.dart';
@@ -42,7 +46,7 @@ class OnboardingScreen extends StatelessWidget {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setBool('seen_onboarding', true);
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const JokesForAll()),
+          MaterialPageRoute(builder: (_) => const MainScreen()),
         );
       },
     );
@@ -89,12 +93,375 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Jokes For All',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-      home: seenOnboarding ? const JokesForAll() : const OnboardingScreen(),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+class MorePage extends StatelessWidget {
+  const MorePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade300, Colors.purple.shade300],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                title:
+                    const Text('More', style: TextStyle(color: Colors.white)),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16.0),
+                  children: [
+                    _buildListTile(
+                      context,
+                      'About',
+                      Icons.info,
+                      Colors.blue,
+                      'Learn more about this app',
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const AboutPage()),
+                      ),
+                    ),
+                    const Divider(color: Colors.white),
+                    _buildListTile(
+                      context,
+                      'Privacy Policy',
+                      Icons.privacy_tip,
+                      Colors.green,
+                      'Read our privacy policy',
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const PrivacyPolicyPage()),
+                      ),
+                    ),
+                    const Divider(color: Colors.white),
+                    _buildListTile(
+                      context,
+                      'Share',
+                      Icons.share,
+                      Colors.orange,
+                      'Share this app',
+                      () {
+                        Share.share(
+                          'Download Jokes For All app from Playstore: https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
+                        );
+                      },
+                    ),
+                    const Divider(color: Colors.white),
+                    _buildListTile(
+                        context,
+                        'Rate Us',
+                        Icons.star,
+                        Colors.amber,
+                        'Rate us on Playstore',
+                        () => launchUrlString(
+                            'https://play.google.com/store/apps/details?id=com.example.flutter_expense_app')),
+                    const Divider(color: Colors.white),
+                    _buildListTile(
+                      context,
+                      'FAQs',
+                      Icons.question_answer,
+                      Colors.purple,
+                      'Frequently asked questions',
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const FaqPage()),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListTile(BuildContext context, String title, IconData icon,
+      Color color, String subtitle, VoidCallback onTap) {
+    return GlassCard(
+      child: ListTile(
+        leading: Icon(icon, color: color),
+        title: Text(
+          title,
+          style: const TextStyle(
+              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
+        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+class AboutPage extends StatelessWidget {
+  const AboutPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade300, Colors.purple.shade300],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                title:
+                    const Text('About', style: TextStyle(color: Colors.white)),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Jokes For All',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildFeatureRow(Icons.emoji_emotions,
+                          'Enjoy a daily dose of laughter with our curated jokes.'),
+                      const SizedBox(height: 16),
+                      _buildFeatureRow(
+                          Icons.shuffle, 'Get random jokes anytime, anywhere.'),
+                      const SizedBox(height: 16),
+                      _buildFeatureRow(Icons.favorite,
+                          'Save your favorite jokes for later.'),
+                      const SizedBox(height: 16),
+                      const Divider(color: Colors.white),
+                      const SizedBox(height: 16),
+                      _buildFeaturesList(),
+                      const SizedBox(height: 16),
+                      const Divider(color: Colors.white),
+                      const SizedBox(height: 16),
+                      _buildAboutUs(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 40, color: Colors.white),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 16, color: Colors.white),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturesList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Features',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildFeatureListTile('Wide variety of jokes'),
+        _buildFeatureListTile('Random joke generator'),
+        _buildFeatureListTile('Favorite jokes collection'),
+        _buildFeatureListTile('Clean and family-friendly content'),
+        _buildFeatureListTile('User-friendly interface'),
+      ],
+    );
+  }
+
+  Widget _buildFeatureListTile(String text) {
+    return ListTile(
+      leading: const Icon(Icons.check_circle, color: Colors.white),
+      title: Text(text, style: const TextStyle(color: Colors.white)),
+    );
+  }
+
+  Widget _buildAboutUs() {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'About Us',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        SizedBox(height: 16),
+        Text(
+          'We are a team of humor enthusiasts dedicated to bringing laughter to your day. Our goal is to provide a fun and enjoyable experience through our carefully curated collection of jokes.',
+          style: TextStyle(fontSize: 16, color: Colors.white),
+        ),
+      ],
+    );
+  }
+}
+
+class PrivacyPolicyPage extends StatelessWidget {
+  const PrivacyPolicyPage({super.key});
+
+  final String url = 'https://www.google.com';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade300, Colors.purple.shade300],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                title: const Text('Privacy Policy',
+                    style: TextStyle(color: Colors.white)),
+              ),
+              Expanded(
+                child: WebViewWidget(
+                  controller: WebViewController()
+                    ..loadRequest(Uri.parse(url))
+                    ..setJavaScriptMode(JavaScriptMode.unrestricted),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  _MainScreenState createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  int _selectedIndex = 0;
+
+  static const List<Widget> _widgetOptions = <Widget>[
+    RandomJokeScreen(),
+    JokeListScreen(),
+    FavoritesScreen(),
+    FaqPage(),
+    MorePage(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+            // gradient: LinearGradient(
+            //   begin: Alignment.topLeft,
+            //   end: Alignment.bottomRight,
+            //   colors: [Colors.blue.shade300, Colors.purple.shade300],
+            // ),
+            ),
+        child: SafeArea(
+          child: _widgetOptions.elementAt(_selectedIndex),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shuffle),
+            label: 'Random',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.list),
+            label: 'Joke List',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.favorite),
+            label: 'Favorites',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.question_answer),
+            label: 'FAQ',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.more_horiz),
+            label: 'More',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.amber[800],
+        unselectedItemColor: Colors.white,
+        onTap: _onItemTapped,
+        backgroundColor: Colors.black,
+        type: BottomNavigationBarType.fixed,
+      ),
     );
   }
 }
@@ -105,6 +472,7 @@ class JokesForAll extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Jokes For All',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -289,12 +657,9 @@ class _RandomJokeScreenState extends State<RandomJokeScreen> {
           child: Column(
             children: [
               AppBar(
+                automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
                 title: const Text('Random Joke',
                     style: TextStyle(color: Colors.white)),
               ),
@@ -381,12 +746,9 @@ class JokeListScreen extends StatelessWidget {
           child: Column(
             children: [
               AppBar(
+                automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
                 title: const Text('Joke List',
                     style: TextStyle(color: Colors.white)),
               ),
@@ -448,12 +810,9 @@ class FavoritesScreen extends StatelessWidget {
           child: Column(
             children: [
               AppBar(
+                automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
                 title: const Text('Favorites',
                     style: TextStyle(color: Colors.white)),
               ),
@@ -517,12 +876,9 @@ class AboutScreen extends StatelessWidget {
           child: Column(
             children: [
               AppBar(
+                automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
                 title:
                     const Text('About', style: TextStyle(color: Colors.white)),
               ),
@@ -625,8 +981,10 @@ class WebViewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: Text(title),
         ),
         body: WebViewWidget(

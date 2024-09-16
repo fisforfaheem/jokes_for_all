@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.jokes_for_all"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
