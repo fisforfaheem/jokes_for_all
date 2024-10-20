@@ -1,8 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:jokes_for_all/main.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
-class FaqPage extends StatelessWidget {
+class FaqPage extends StatefulWidget {
   const FaqPage({super.key});
+
+  @override
+  _FaqPageState createState() => _FaqPageState();
+}
+
+class _FaqPageState extends State<FaqPage> {
+  final List<FaqItem> _faqItems = [
+    FaqItem(
+      'What types of jokes are included?',
+      Icons.category,
+      Colors.purple,
+      'Our app includes a wide variety of jokes, including puns, one-liners, knock-knock jokes, and more. We aim to cater to different senses of humor!',
+    ),
+    FaqItem(
+      'Are the jokes family-friendly?',
+      Icons.family_restroom,
+      Colors.green,
+      'Yes, we strive to keep all jokes family-friendly. However, humor can be subjective, so use your discretion when sharing with younger audiences.',
+    ),
+    FaqItem(
+      'How often are new jokes added?',
+      Icons.update,
+      Colors.blue,
+      'We update our joke database regularly, adding new jokes every week to keep the content fresh and entertaining.',
+    ),
+    FaqItem(
+      'Can I submit my own jokes?',
+      Icons.add_comment,
+      Colors.orange,
+      'Currently, we don\'t have a feature for user submissions. However, we\'re considering adding this in a future update. Stay tuned!',
+    ),
+    FaqItem(
+      'Why is laughter important?',
+      Icons.mood,
+      Colors.yellow,
+      'Laughter has numerous health benefits, including stress relief, boosting the immune system, and improving mood. It\'s a natural way to feel good!',
+    ),
+    FaqItem(
+      'What makes a good joke?',
+      Icons.thumb_up,
+      Colors.cyan,
+      'A good joke often relies on surprise, timing, and relatability. It should be clever, not offensive, and leave people smiling or laughing.',
+    ),
+    FaqItem(
+      'How to use the app?',
+      Icons.help_outline,
+      Colors.teal,
+      'Navigate through the bottom menu to access different sections: Random Joke, Joke List, Favorites, and More. Tap on jokes to read them and use the heart icon to save favorites.',
+    ),
+    FaqItem(
+      'How to share jokes?',
+      Icons.share,
+      Colors.pink,
+      'While viewing a joke, look for the share icon. Tap it to open your device\'s sharing options and send the joke to friends and family.',
+    ),
+  ];
+
+  List<FaqItem> _filteredFaqItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredFaqItems = _faqItems;
+  }
+
+  void _filterFaqItems(String query) {
+    setState(() {
+      _filteredFaqItems = _faqItems
+          .where(
+              (item) => item.title.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,50 +95,57 @@ class FaqPage extends StatelessWidget {
               AppBar(
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
                 title:
                     const Text('FAQs', style: TextStyle(color: Colors.white)),
               ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  onChanged: _filterFaqItems,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search FAQs',
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.2),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16.0),
-                  children: [
-                    _buildFaqTile(
-                      context,
-                      'How to use this app?',
-                      Icons.help_outline,
-                      Colors.blue,
-                      'This app helps you enjoy a daily dose of laughter with a curated collection of jokes. You can view random jokes, browse through a list, and save your favorites.',
-                    ),
-                    const Divider(color: Colors.white),
-                    _buildFaqTile(
-                      context,
-                      'How to view a random joke?',
-                      Icons.shuffle,
-                      Colors.green,
-                      'Go to the "Random Joke" section from the main menu. You\'ll see a joke displayed on the screen. To get a new random joke, simply tap the "Next Joke" button.',
-                    ),
-                    const Divider(color: Colors.white),
-                    _buildFaqTile(
-                      context,
-                      'How to save a favorite joke?',
-                      Icons.favorite,
-                      Colors.red,
-                      'When viewing a joke in the "Joke List" section, you\'ll see a heart icon next to each joke. Tap the heart icon to add the joke to your favorites. Tap it again to remove it from favorites.',
-                    ),
-                    const Divider(color: Colors.white),
-                    _buildFaqTile(
-                      context,
-                      'How to view my favorite jokes?',
-                      Icons.list,
-                      Colors.orange,
-                      'From the main menu, tap on the "Favorites" option. This will take you to a list of all the jokes you\'ve marked as favorites. You can remove jokes from your favorites list by tapping the heart icon again.',
-                    ),
-                    const Divider(color: Colors.white),
-                  ],
+                child: AnimationLimiter(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: _filteredFaqItems.length,
+                    itemBuilder: (context, index) {
+                      return AnimationConfiguration.staggeredList(
+                        position: index,
+                        duration: const Duration(milliseconds: 375),
+                        child: SlideAnimation(
+                          verticalOffset: 50.0,
+                          child: FadeInAnimation(
+                            child: Column(
+                              children: [
+                                _buildFaqTile(
+                                  context,
+                                  _filteredFaqItems[index].title,
+                                  _filteredFaqItems[index].icon,
+                                  _filteredFaqItems[index].iconColor,
+                                  _filteredFaqItems[index].content,
+                                ),
+                                if (index < _filteredFaqItems.length - 1)
+                                  const Divider(color: Colors.white),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -132,7 +213,7 @@ class FaqDetailPage extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: GlassCard(
-                    child: Padding(
+                    child: SingleChildScrollView(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
                         content,
@@ -149,4 +230,13 @@ class FaqDetailPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class FaqItem {
+  final String title;
+  final IconData icon;
+  final Color iconColor;
+  final String content;
+
+  FaqItem(this.title, this.icon, this.iconColor, this.content);
 }

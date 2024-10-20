@@ -14,6 +14,10 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:math';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -125,74 +129,34 @@ class MorePage extends StatelessWidget {
                 automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                title:
-                    const Text('More', style: TextStyle(color: Colors.white)),
+                title: Text(
+                  'More',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16.0),
-                  children: [
-                    _buildListTile(
-                      context,
-                      'About',
-                      Icons.info,
-                      Colors.blue,
-                      'Learn more about this app',
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const AboutPage()),
+                child: AnimationLimiter(
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    padding: const EdgeInsets.all(16.0),
+                    children: List.generate(
+                      5,
+                      (index) => AnimationConfiguration.staggeredGrid(
+                        position: index,
+                        duration: const Duration(milliseconds: 375),
+                        columnCount: 2,
+                        child: ScaleAnimation(
+                          child: FadeInAnimation(
+                            child: _buildGridItem(context, index),
+                          ),
+                        ),
                       ),
                     ),
-                    const Divider(color: Colors.white),
-                    _buildListTile(
-                      context,
-                      'Privacy Policy',
-                      Icons.privacy_tip,
-                      Colors.green,
-                      'Read our privacy policy',
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const PrivacyPolicyPage()),
-                      ),
-                    ),
-                    const Divider(color: Colors.white),
-                    _buildListTile(
-                      context,
-                      'Share',
-                      Icons.share,
-                      Colors.orange,
-                      'Share this app',
-                      () {
-                        Share.share(
-                          'Download Jokes For All app from Playstore: https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
-                        );
-                      },
-                    ),
-                    const Divider(color: Colors.white),
-                    _buildListTile(
-                        context,
-                        'Rate Us',
-                        Icons.star,
-                        Colors.amber,
-                        'Rate us on Playstore',
-                        () => launchUrlString(
-                            'https://play.google.com/store/apps/details?id=com.example.flutter_expense_app')),
-                    const Divider(color: Colors.white),
-                    _buildListTile(
-                      context,
-                      'FAQs',
-                      Icons.question_answer,
-                      Colors.purple,
-                      'Frequently asked questions',
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const FaqPage()),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -202,19 +166,81 @@ class MorePage extends StatelessWidget {
     );
   }
 
-  Widget _buildListTile(BuildContext context, String title, IconData icon,
-      Color color, String subtitle, VoidCallback onTap) {
-    return GlassCard(
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(
-          title,
-          style: const TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+  Widget _buildGridItem(BuildContext context, int index) {
+    final List<Map<String, dynamic>> items = [
+      {
+        'title': 'About',
+        'icon': Icons.info_outline,
+        'color': Colors.blue,
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AboutPage()),
+            ),
+      },
+      {
+        'title': 'Privacy Policy',
+        'icon': Icons.privacy_tip_outlined,
+        'color': Colors.green,
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const PrivacyPolicyPage()),
+            ),
+      },
+      {
+        'title': 'Share',
+        'icon': Icons.share_outlined,
+        'color': Colors.orange,
+        'onTap': () {
+          Share.share(
+            'Download Jokes For All app from Playstore: https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
+          );
+        },
+      },
+      {
+        'title': 'Rate Us',
+        'icon': Icons.star_outline,
+        'color': Colors.amber,
+        'onTap': () => launchUrlString(
+              'https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
+            ),
+      },
+      {
+        'title': 'FAQs',
+        'icon': Icons.question_answer_outlined,
+        'color': Colors.purple,
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FaqPage()),
+            ),
+      },
+    ];
+
+    return GestureDetector(
+      onTap: items[index]['onTap'],
+      child: Card(
+        elevation: 5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        color: Colors.greenAccent.withOpacity(.2),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              items[index]['icon'],
+              size: 50,
+              color: items[index]['color'],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              items[index]['title'],
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
-        trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-        onTap: onTap,
       ),
     );
   }
@@ -421,46 +447,33 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-            // gradient: LinearGradient(
-            //   begin: Alignment.topLeft,
-            //   end: Alignment.bottomRight,
-            //   colors: [Colors.blue.shade300, Colors.purple.shade300],
-            // ),
-            ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade300, Colors.purple.shade300],
+          ),
+        ),
         child: SafeArea(
           child: _widgetOptions.elementAt(_selectedIndex),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shuffle),
-            label: 'Random',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.list),
-            label: 'Joke List',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.question_answer),
-            label: 'FAQ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz),
-            label: 'More',
-          ),
+      bottomNavigationBar: CurvedNavigationBar(
+        backgroundColor: Colors.transparent,
+        color: Colors.black.withOpacity(0.5),
+        buttonBackgroundColor: Colors.amber[800],
+        height: 60,
+        items: const <Widget>[
+          Icon(Icons.shuffle, size: 30, color: Colors.white),
+          Icon(Icons.list, size: 30, color: Colors.white),
+          Icon(Icons.favorite, size: 30, color: Colors.white),
+          Icon(Icons.question_answer, size: 30, color: Colors.white),
+          Icon(Icons.more_horiz, size: 30, color: Colors.white),
         ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.amber[800],
-        unselectedItemColor: Colors.white,
         onTap: _onItemTapped,
-        backgroundColor: Colors.black,
-        type: BottomNavigationBarType.fixed,
+        index: _selectedIndex,
+        animationDuration: const Duration(milliseconds: 300),
+        animationCurve: Curves.easeInOut,
       ),
     );
   }
@@ -604,42 +617,62 @@ class RandomJokeScreen extends StatefulWidget {
   _RandomJokeScreenState createState() => _RandomJokeScreenState();
 }
 
-class _RandomJokeScreenState extends State<RandomJokeScreen> {
+class _RandomJokeScreenState extends State<RandomJokeScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _showFront = true;
+  String _currentJoke = '';
+  int _jokeCount = 0;
+  int _totalJokes = 0;
+
   final List<String> jokes = [
     "Why don't scientists trust atoms? Because they make up everything!",
     "Why did the scarecrow win an award? He was outstanding in his field!",
     "Why don't eggs tell jokes? They'd crack each other up!",
     "What do you call a fake noodle? An impasta!",
     "Why did the math book look so sad? Because it had too many problems!",
-    "What do you call a bear with no teeth? A gummy bear!",
-    "Why don't skeletons fight each other? They don't have the guts!",
-    "What do you call a can opener that doesn't work? A can't opener!",
-    "Why don't oysters donate to charity? Because they're shellfish!",
-    "What do you call a sleeping bull? A bulldozer!",
-    "Why don't eggs tell jokes? They'd crack each other up!",
-    "What do you call a fake noodle? An impasta!",
-    "Why did the math book look so sad? Because it had too many problems!",
-    "What do you call a bear with no teeth? A gummy bear!",
-    "Why don't skeletons fight each other? They don't have the guts!",
-    "What do you call a can opener that doesn't work? A can't opener!",
-    "Why don't oysters donate to charity? Because they're shellfish!",
-    "What do you call a sleeping bull? A bulldozer!",
-    "Why did the bicycle fall over? Because it was two-tired!",
-    "What do you call a boomerang that doesn't come back? A stick!",
+    // Add more jokes here...
   ];
-
-  late String currentJoke;
 
   @override
   void initState() {
     super.initState();
-    currentJoke = jokes[0];
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _animation = Tween<double>(begin: 0, end: 1).animate(_controller)
+      ..addListener(() {
+        setState(() {});
+      });
+    _totalJokes = jokes.length;
+    _getRandomJoke();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   void _getRandomJoke() {
     setState(() {
-      currentJoke = jokes[DateTime.now().millisecondsSinceEpoch % jokes.length];
+      _currentJoke = jokes[Random().nextInt(jokes.length)];
+      _jokeCount++;
     });
+  }
+
+  void _flipCard() {
+    if (_showFront) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+    _showFront = !_showFront;
+    if (!_showFront) {
+      _getRandomJoke();
+    }
   }
 
   @override
@@ -660,41 +693,148 @@ class _RandomJokeScreenState extends State<RandomJokeScreen> {
                 automaticallyImplyLeading: false,
                 backgroundColor: Colors.transparent,
                 elevation: 0,
-                title: const Text('Random Joke',
-                    style: TextStyle(color: Colors.white)),
+                title: Text(
+                  'Random Joke',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: LinearProgressIndicator(
+                  value: _jokeCount / _totalJokes,
+                  backgroundColor: Colors.white.withOpacity(0.3),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Joke $_jokeCount of $_totalJokes',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
               ),
               Expanded(
                 child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: GlassCard(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              currentJoke,
-                              style: const TextStyle(
-                                  fontSize: 18, color: Colors.white),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: _getRandomJoke,
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                backgroundColor: Colors.white.withOpacity(0.3),
-                              ),
-                              child: const Text('Next Joke'),
-                            ),
-                          ],
-                        ),
-                      ),
+                  child: GestureDetector(
+                    onTap: _flipCard,
+                    child: AnimatedBuilder(
+                      animation: _animation,
+                      builder: (context, child) {
+                        return Transform(
+                          transform: Matrix4.identity()
+                            ..setEntry(3, 2, 0.001)
+                            ..rotateY(pi * _animation.value),
+                          alignment: Alignment.center,
+                          child: _showFront ? _buildFront() : _buildBack(),
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  _showFront
+                      ? 'Tap the card to reveal a joke!'
+                      : 'Tap again for a new joke!',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.5, end: 0),
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          final jokeProvider =
+              Provider.of<JokeProvider>(context, listen: false);
+          jokeProvider.toggleFavorite(_currentJoke);
+        },
+        child: Consumer<JokeProvider>(
+          builder: (context, jokeProvider, child) {
+            return Icon(
+              jokeProvider.isFavorite(_currentJoke)
+                  ? Icons.favorite
+                  : Icons.favorite_border,
+              color: Colors.white,
+            );
+          },
+        ),
+      ).animate().scale(duration: 300.ms, curve: Curves.easeInOut),
+    );
+  }
+
+  Widget _buildFront() {
+    return Card(
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: Colors.white.withOpacity(0.2),
+      child: Container(
+        width: 300,
+        height: 400,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.sentiment_very_satisfied,
+              size: 80,
+              color: Colors.white,
+            ).animate().scale(duration: 300.ms, curve: Curves.easeInOut),
+            const SizedBox(height: 20),
+            Text(
+              'Ready for a laugh?',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.5, end: 0),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBack() {
+    return Transform(
+      transform: Matrix4.identity()..rotateY(pi),
+      alignment: Alignment.center,
+      child: Card(
+        elevation: 5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        color: Colors.white.withOpacity(0.2),
+        child: Container(
+          width: 300,
+          height: 400,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.emoji_emotions,
+                size: 60,
+                color: Colors.white,
+              ).animate().scale(duration: 300.ms, curve: Curves.easeInOut),
+              const SizedBox(height: 20),
+              Text(
+                _currentJoke,
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 18,
+                ),
+                textAlign: TextAlign.center,
+              ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.5, end: 0),
             ],
           ),
         ),
@@ -795,8 +935,6 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final jokeProvider = Provider.of<JokeProvider>(context);
-    final favorites = jokeProvider.favorites;
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -817,38 +955,45 @@ class FavoritesScreen extends StatelessWidget {
                     style: TextStyle(color: Colors.white)),
               ),
               Expanded(
-                child: favorites.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No favorites yet!',
-                          style: TextStyle(color: Colors.white, fontSize: 18),
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: favorites.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            child: GlassCard(
-                              child: ListTile(
-                                title: Text(
-                                  favorites[index],
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.favorite,
-                                      color: Colors.red),
-                                  onPressed: () {
-                                    jokeProvider
-                                        .toggleFavorite(favorites[index]);
-                                  },
-                                ),
-                              ),
+                child: Consumer<JokeProvider>(
+                  builder: (context, jokeProvider, child) {
+                    final favorites = jokeProvider.favorites;
+                    return favorites.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No favorites yet!',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 18),
                             ),
+                          )
+                        : ListView.builder(
+                            itemCount: favorites.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                child: GlassCard(
+                                  child: ListTile(
+                                    title: Text(
+                                      favorites[index],
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                    trailing: IconButton(
+                                      icon: const Icon(Icons.favorite,
+                                          color: Colors.red),
+                                      onPressed: () {
+                                        jokeProvider
+                                            .toggleFavorite(favorites[index]);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           );
-                        },
-                      ),
+                  },
+                ),
               ),
             ],
           ),

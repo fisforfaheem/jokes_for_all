@@ -7,8 +7,11 @@ environment:
   sdk: ^3.5.0-323.2.beta
 
 dependencies:
+  curved_navigation_bar: ^1.0.6
   flutter:
     sdk: flutter
+  flutter_animate: ^4.5.0
+  flutter_staggered_animations: ^1.1.1
   google_fonts: ^6.2.1
   hive: ^2.2.3
   introduction_screen: ^3.1.14
