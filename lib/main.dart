@@ -58,9 +58,25 @@ class OnboardingScreen extends StatelessWidget {
 }
 
 class JokeProvider extends ChangeNotifier {
-  final List<String> _favorites = [];
+  Set<String> _favorites = {};
+  static const String _favoritesKey = 'favorite_jokes';
 
-  List<String> get favorites => _favorites;
+  JokeProvider() {
+    _loadFavorites();
+  }
+
+  Set<String> get favorites => _favorites;
+
+  Future<void> _loadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    _favorites = prefs.getStringList(_favoritesKey)?.toSet() ?? {};
+    notifyListeners();
+  }
+
+  Future<void> _saveFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_favoritesKey, _favorites.toList());
+  }
 
   void toggleFavorite(String joke) {
     if (_favorites.contains(joke)) {
@@ -68,6 +84,7 @@ class JokeProvider extends ChangeNotifier {
     } else {
       _favorites.add(joke);
     }
+    _saveFavorites();
     notifyListeners();
   }
 
@@ -78,32 +95,27 @@ class JokeProvider extends ChangeNotifier {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool seenOnboarding = prefs.getBool('seen_onboarding') ?? false;
+  final jokeProvider = JokeProvider();
+  await jokeProvider
+      ._loadFavorites(); // Ensure favorites are loaded before running the app
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => JokeProvider(),
-      child: MyApp(seenOnboarding: seenOnboarding),
+    ChangeNotifierProvider.value(
+      value: jokeProvider,
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  final bool seenOnboarding;
-
-  const MyApp({super.key, required this.seenOnboarding});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'Jokes For All',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        textTheme: GoogleFonts.poppinsTextTheme(),
-      ),
-      home: const SplashScreen(),
+      theme: ThemeData.dark(),
+      home: const MainScreen(),
     );
   }
 }
@@ -623,8 +635,7 @@ class _RandomJokeScreenState extends State<RandomJokeScreen>
   late Animation<double> _animation;
   bool _showFront = true;
   String _currentJoke = '';
-  int _jokeCount = 0;
-  int _totalJokes = 0;
+  List<int> _seenJokes = [];
 
   final List<String> jokes = [
     "Why don't scientists trust atoms? Because they make up everything!",
@@ -646,8 +657,7 @@ class _RandomJokeScreenState extends State<RandomJokeScreen>
       ..addListener(() {
         setState(() {});
       });
-    _totalJokes = jokes.length;
-    _getRandomJoke();
+    _loadSeenJokes();
   }
 
   @override
@@ -656,11 +666,35 @@ class _RandomJokeScreenState extends State<RandomJokeScreen>
     super.dispose();
   }
 
-  void _getRandomJoke() {
+  Future<void> _loadSeenJokes() async {
+    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _currentJoke = jokes[Random().nextInt(jokes.length)];
-      _jokeCount++;
+      _seenJokes =
+          prefs.getStringList('seen_jokes')?.map(int.parse).toList() ?? [];
+      _getRandomJoke();
     });
+  }
+
+  Future<void> _saveSeenJokes() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+        'seen_jokes', _seenJokes.map((e) => e.toString()).toList());
+  }
+
+  void _getRandomJoke() {
+    if (_seenJokes.length == jokes.length) {
+      _seenJokes.clear();
+    }
+    int index;
+    do {
+      index = Random().nextInt(jokes.length);
+    } while (_seenJokes.contains(index));
+
+    setState(() {
+      _currentJoke = jokes[index];
+      _seenJokes.add(index);
+    });
+    _saveSeenJokes();
   }
 
   void _flipCard() {
@@ -700,22 +734,6 @@ class _RandomJokeScreenState extends State<RandomJokeScreen>
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: LinearProgressIndicator(
-                  value: _jokeCount / _totalJokes,
-                  backgroundColor: Colors.white.withOpacity(0.3),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Joke $_jokeCount of $_totalJokes',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 16,
                 ),
               ),
               Expanded(
@@ -957,7 +975,7 @@ class FavoritesScreen extends StatelessWidget {
               Expanded(
                 child: Consumer<JokeProvider>(
                   builder: (context, jokeProvider, child) {
-                    final favorites = jokeProvider.favorites;
+                    final favorites = jokeProvider.favorites.toList();
                     return favorites.isEmpty
                         ? const Center(
                             child: Text(
