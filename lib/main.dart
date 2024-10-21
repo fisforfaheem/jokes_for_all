@@ -46,13 +46,21 @@ class OnboardingScreen extends StatelessWidget {
       skip: const Text("Skip"),
       next: const Text("Next"),
       done: const Text("Done"),
-      onDone: () async {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('seen_onboarding', true);
+      onDone: () {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MainScreen()),
         );
       },
+      dotsDecorator: DotsDecorator(
+        size: const Size.square(10.0),
+        activeSize: const Size(20.0, 10.0),
+        activeColor: Theme.of(context).colorScheme.secondary,
+        color: Colors.black26,
+        spacing: const EdgeInsets.symmetric(horizontal: 3.0),
+        activeShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(25.0),
+        ),
+      ),
     );
   }
 }
@@ -60,9 +68,34 @@ class OnboardingScreen extends StatelessWidget {
 class JokeProvider extends ChangeNotifier {
   Set<String> _favorites = {};
   static const String _favoritesKey = 'favorite_jokes';
+  static const String _lastViewedDateKey = 'last_viewed_date';
+  static const String _streakCountKey = 'streak_count';
+  int _streakCount = 0;
+  String _jokeOfTheDay = '';
+
+  // Add this list of jokes
+  final List<String> jokes = [
+    "Why don't scientists trust atoms? Because they make up everything!",
+    "Why did the scarecrow win an award? He was outstanding in his field!",
+    "Why don't eggs tell jokes? They'd crack each other up!",
+    "What do you call a fake noodle? An impasta!",
+    "Why did the math book look so sad? Because it had too many problems!",
+    "What do you call a bear with no teeth? A gummy bear!",
+    "Why don't skeletons fight each other? They don't have the guts!",
+    "What do you call a can opener that doesn't work? A can't opener!",
+    "Why don't oysters donate to charity? Because they're shellfish!",
+    "What do you call a sleeping bull? A bulldozer!",
+    "Why did the bicycle fall over? Because it was two-tired!",
+    "What do you call a boomerang that doesn't come back? A stick!",
+    "Why did the scarecrow win an award? He was outstanding in his field!",
+    "What do you call a pig that does karate? A pork chop!",
+    "Why don't scientists trust stairs? They're always up to something!",
+  ];
 
   JokeProvider() {
     _loadFavorites();
+    _loadStreak();
+    _setJokeOfTheDay();
   }
 
   Set<String> get favorites => _favorites;
@@ -91,13 +124,47 @@ class JokeProvider extends ChangeNotifier {
   bool isFavorite(String joke) {
     return _favorites.contains(joke);
   }
+
+  int get streakCount => _streakCount;
+  String get jokeOfTheDay => _jokeOfTheDay;
+
+  Future<void> _loadStreak() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastViewedDate = prefs.getString(_lastViewedDateKey);
+    final today = DateTime.now().toIso8601String().split('T')[0];
+
+    if (lastViewedDate == today) {
+      _streakCount = prefs.getInt(_streakCountKey) ?? 0;
+    } else if (lastViewedDate ==
+        DateTime.now()
+            .subtract(const Duration(days: 1))
+            .toIso8601String()
+            .split('T')[0]) {
+      _streakCount = (prefs.getInt(_streakCountKey) ?? 0) + 1;
+      await prefs.setInt(_streakCountKey, _streakCount);
+    } else {
+      _streakCount = 1;
+      await prefs.setInt(_streakCountKey, _streakCount);
+    }
+
+    await prefs.setString(_lastViewedDateKey, today);
+    notifyListeners();
+  }
+
+  void _setJokeOfTheDay() {
+    final random = Random();
+    _jokeOfTheDay = jokes[random.nextInt(jokes.length)];
+  }
+
+  void shareJokeOfTheDay() {
+    Share.share('Here\'s today\'s joke from Jokes For All:\n\n$_jokeOfTheDay');
+  }
 }
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final jokeProvider = JokeProvider();
-  await jokeProvider
-      ._loadFavorites(); // Ensure favorites are loaded before running the app
+  await jokeProvider._loadFavorites();
 
   runApp(
     ChangeNotifierProvider.value(
@@ -113,9 +180,100 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Jokes For All',
       theme: ThemeData.dark(),
-      home: const MainScreen(),
+      home: const SplashScreen(),
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  _SplashScreenState createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
+
+    _controller.forward();
+
+    Future.delayed(const Duration(seconds: 3), () {
+      _checkFirstSeen();
+    });
+  }
+
+  Future<void> _checkFirstSeen() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool seen = (prefs.getBool('seen') ?? false);
+
+    if (seen) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const MainScreen()),
+      );
+    } else {
+      await prefs.setBool('seen', true);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade300, Colors.purple.shade300],
+          ),
+        ),
+        child: Center(
+          child: FadeTransition(
+            opacity: _animation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.emoji_emotions,
+                  size: 100,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Jokes For All',
+                  style: GoogleFonts.poppins(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -152,22 +310,21 @@ class MorePage extends StatelessWidget {
               ),
               Expanded(
                 child: AnimationLimiter(
-                  child: GridView.count(
-                    crossAxisCount: 2,
-                    padding: const EdgeInsets.all(16.0),
-                    children: List.generate(
-                      5,
-                      (index) => AnimationConfiguration.staggeredGrid(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _moreItems.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return AnimationConfiguration.staggeredList(
                         position: index,
                         duration: const Duration(milliseconds: 375),
-                        columnCount: 2,
-                        child: ScaleAnimation(
+                        child: SlideAnimation(
+                          verticalOffset: 50.0,
                           child: FadeInAnimation(
-                            child: _buildGridItem(context, index),
+                            child: _buildListItem(context, index),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -178,85 +335,99 @@ class MorePage extends StatelessWidget {
     );
   }
 
-  Widget _buildGridItem(BuildContext context, int index) {
-    final List<Map<String, dynamic>> items = [
-      {
-        'title': 'About',
-        'icon': Icons.info_outline,
-        'color': Colors.blue,
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AboutPage()),
-            ),
-      },
-      {
-        'title': 'Privacy Policy',
-        'icon': Icons.privacy_tip_outlined,
-        'color': Colors.green,
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const PrivacyPolicyPage()),
-            ),
-      },
-      {
-        'title': 'Share',
-        'icon': Icons.share_outlined,
-        'color': Colors.orange,
-        'onTap': () {
-          Share.share(
-            'Download Jokes For All app from Playstore: https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
-          );
-        },
-      },
-      {
-        'title': 'Rate Us',
-        'icon': Icons.star_outline,
-        'color': Colors.amber,
-        'onTap': () => launchUrlString(
-              'https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
-            ),
-      },
-      {
-        'title': 'FAQs',
-        'icon': Icons.question_answer_outlined,
-        'color': Colors.purple,
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FaqPage()),
-            ),
-      },
-    ];
-
-    return GestureDetector(
-      onTap: items[index]['onTap'],
-      child: Card(
-        elevation: 5,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        color: Colors.greenAccent.withOpacity(.2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              items[index]['icon'],
-              size: 50,
-              color: items[index]['color'],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              items[index]['title'],
+  Widget _buildListItem(BuildContext context, int index) {
+    final item = _moreItems[index];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: GestureDetector(
+        onTap: () => item['onTap'](context),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            color: Colors.white.withOpacity(0.1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: ListTile(
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            leading: Icon(
+              item['icon'],
+              size: 36,
+              color: item['color'],
+            )
+                .animate()
+                .scale(duration: 300.ms, curve: Curves.easeInOut)
+                .then()
+                .shake(hz: 4, curve: Curves.easeInOut),
+            title: Text(
+              item['title'],
               style: GoogleFonts.poppins(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
               ),
             ),
-          ],
+            trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+          ),
         ),
       ),
     );
   }
 }
+
+final List<Map<String, dynamic>> _moreItems = [
+  {
+    'title': 'About',
+    'icon': Icons.info_outline,
+    'color': Colors.blue,
+    'onTap': (BuildContext context) => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const AboutPage()),
+        ),
+  },
+  {
+    'title': 'Privacy Policy',
+    'icon': Icons.privacy_tip_outlined,
+    'color': Colors.green,
+    'onTap': (BuildContext context) => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const PrivacyPolicyPage()),
+        ),
+  },
+  {
+    'title': 'Share',
+    'icon': Icons.share_outlined,
+    'color': Colors.orange,
+    'onTap': (BuildContext context) {
+      Share.share(
+        'Download Jokes For All app from Playstore: https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
+      );
+    },
+  },
+  {
+    'title': 'Rate Us',
+    'icon': Icons.star_outline,
+    'color': Colors.amber,
+    'onTap': (BuildContext context) => launchUrlString(
+          'https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
+        ),
+  },
+  {
+    'title': 'FAQs',
+    'icon': Icons.question_answer_outlined,
+    'color': Colors.purple,
+    'onTap': (BuildContext context) => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const FaqPage()),
+        ),
+  },
+];
 
 class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
@@ -443,6 +614,7 @@ class _MainScreenState extends State<MainScreen> {
 
   static const List<Widget> _widgetOptions = <Widget>[
     RandomJokeScreen(),
+    JokeOfTheDayScreen(),
     JokeListScreen(),
     FavoritesScreen(),
     FaqPage(),
@@ -476,10 +648,11 @@ class _MainScreenState extends State<MainScreen> {
         buttonBackgroundColor: Colors.amber[800],
         height: 60,
         items: const <Widget>[
+          Icon(Icons.calendar_today, size: 30, color: Colors.white),
           Icon(Icons.shuffle, size: 30, color: Colors.white),
           Icon(Icons.list, size: 30, color: Colors.white),
           Icon(Icons.favorite, size: 30, color: Colors.white),
-          Icon(Icons.question_answer, size: 30, color: Colors.white),
+          Icon(Icons.question_answer_outlined, size: 30, color: Colors.white),
           Icon(Icons.more_horiz, size: 30, color: Colors.white),
         ],
         onTap: _onItemTapped,
@@ -643,7 +816,81 @@ class _RandomJokeScreenState extends State<RandomJokeScreen>
     "Why don't eggs tell jokes? They'd crack each other up!",
     "What do you call a fake noodle? An impasta!",
     "Why did the math book look so sad? Because it had too many problems!",
-    // Add more jokes here...
+    "What do you call a bear with no teeth? A gummy bear!",
+    "Why don't skeletons fight each other? They don't have the guts!",
+    "What do you call a can opener that doesn't work? A can't opener!",
+    "Why don't oysters donate to charity? Because they're shellfish!",
+    "What do you call a sleeping bull? A bulldozer!",
+    "Why did the bicycle fall over? Because it was two-tired!",
+    "What do you call a boomerang that doesn't come back? A stick!",
+    "Why did the scarecrow win an award? He was outstanding in his field!",
+    "What do you call a pig that does karate? A pork chop!",
+    "Why don't scientists trust stairs? They're always up to something!",
+    "What do you call a fake stone in Ireland? A sham rock!",
+    "Why don't eggs tell each other secrets? Because they'd crack up!",
+    "What do you call a bear with no ears? B!",
+    "Why did the cookie go to the doctor? Because it was feeling crumbly!",
+    "What do you call a sleeping dinosaur? A dino-snore!",
+    "Why don't ants get sick? Because they have tiny ant-ibodies!",
+    "What do you call a fish wearing a bowtie? So-fish-ticated!",
+    "Why don't moths use Twitter? They prefer the lamp post!",
+    "What do you call a dog magician? A labracadabrador!",
+    "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    "What do you call a fake noodle? An impasta!",
+    "Why don't scientists trust atoms? Because they make up everything!",
+    "What do you call a bear with no teeth? A gummy bear!",
+    "Why don't skeletons fight each other? They don't have the guts!",
+    "What do you call a can opener that doesn't work? A can't opener!",
+    "Why don't oysters donate to charity? Because they're shellfish!",
+    "What do you call a sleeping bull? A bulldozer!",
+    "Why did the bicycle fall over? Because it was two-tired!",
+    "What do you call a boomerang that doesn't come back? A stick!",
+    "Why did the scarecrow win an award? He was outstanding in his field!",
+    "What do you call a pig that does karate? A pork chop!",
+    "Why don't scientists trust stairs? They're always up to something!",
+    "What do you call a fake stone in Ireland? A sham rock!",
+    "Why don't eggs tell each other secrets? Because they'd crack up!",
+    "What do you call a bear with no ears? B!",
+    "What do you call a pig that does karate? A pork chop!",
+    "Why don't scientists trust stairs? They're always up to something!",
+    "What do you call a fake stone in Ireland? A sham rock!",
+    "Why don't eggs tell each other secrets? Because they'd crack up!",
+    "What do you call a bear with no ears? B!",
+    "Why don't skeletons fight each other? They don't have the guts!",
+    "What do you call a can opener that doesn't work? A can't opener!",
+    "Why don't oysters donate to charity? Because they're shellfish!",
+    "What do you call a sleeping bull? A bulldozer!",
+    "Why did the bicycle fall over? Because it was two-tired!",
+    "What do you call a boomerang that doesn't come back? A stick!",
+    "Why did the scarecrow win an award? He was outstanding in his field!",
+    "What do you call a fake noodle? An impasta!",
+    "Why don't scientists trust atoms? Because they make up everything!",
+    "What do you call a bear with no teeth? A gummy bear!",
+    "Why don't moths use Twitter? They prefer the lamp post!",
+    "What do you call a dog magician? A labracadabrador!",
+    "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+    "What do you call a fish wearing a bowtie? So-fish-ticated!",
+    "Why don't ants get sick? Because they have tiny ant-ibodies!",
+    "What do you call a sleeping dinosaur? A dino-snore!",
+    "Why did the cookie go to the doctor? Because it was feeling crumbly!",
+    "What do you call a cow with no legs? Ground beef!",
+    "Why don't eggs tell jokes? They'd crack each other up!",
+    "What do you call a fake spaghetti? An impasta!",
+    "Why don't scientists trust atoms? Because they make up everything!",
+    "What do you call a bear with no teeth? A gummy bear!",
+    "Why don't skeletons fight each other? They don't have the guts!",
+    "What do you call a can opener that doesn't work? A can't opener!",
+    "Why don't oysters donate to charity? Because they're shellfish!",
+    "What do you call a sleeping bull? A bulldozer!",
+    "Why did the bicycle fall over? Because it was two-tired!",
+    "What do you call a boomerang that doesn't come back? A stick!",
+    "Why did the scarecrow win an award? He was outstanding in his field!",
+    "What do you call a pig that does karate? A pork chop!",
+    "Why don't scientists trust stairs? They're always up to something!",
+    "What do you call a fake stone in Ireland? A sham rock!",
+    "Why don't eggs tell each other secrets? Because they'd crack up!",
+    "What do you call a bear with no ears? B!",
+    "Why don't skeletons fight each other? They don't have the guts!",
   ];
 
   @override
@@ -889,6 +1136,46 @@ class JokeListScreen extends StatelessWidget {
       "What do you call a sleeping bull? A bulldozer!",
       "Why did the bicycle fall over? Because it was two-tired!",
       "What do you call a boomerang that doesn't come back? A stick!",
+      "What do you call a pig that does karate? A pork chop!",
+      "Why don't scientists trust stairs? They're always up to something!",
+      "What do you call a fake stone in Ireland? A sham rock!",
+      "Why don't eggs tell each other secrets? Because they'd crack up!",
+      "What do you call a bear with no ears? B!",
+      "Why don't skeletons fight each other? They don't have the guts!",
+      "What do you call a can opener that doesn't work? A can't opener!",
+      "Why don't oysters donate to charity? Because they're shellfish!",
+      "What do you call a sleeping bull? A bulldozer!",
+      "Why did the bicycle fall over? Because it was two-tired!",
+      "What do you call a boomerang that doesn't come back? A stick!",
+      "Why did the scarecrow win an award? He was outstanding in his field!",
+      "What do you call a fake noodle? An impasta!",
+      "Why don't scientists trust atoms? Because they make up everything!",
+      "What do you call a bear with no teeth? A gummy bear!",
+      "Why don't moths use Twitter? They prefer the lamp post!",
+      "What do you call a dog magician? A labracadabrador!",
+      "Why did the golfer bring two pairs of pants? In case he got a hole in one!",
+      "What do you call a fish wearing a bowtie? So-fish-ticated!",
+      "Why don't ants get sick? Because they have tiny ant-ibodies!",
+      "What do you call a sleeping dinosaur? A dino-snore!",
+      "Why did the cookie go to the doctor? Because it was feeling crumbly!",
+      "What do you call a cow with no legs? Ground beef!",
+      "Why don't eggs tell jokes? They'd crack each other up!",
+      "What do you call a fake spaghetti? An impasta!",
+      "Why don't scientists trust atoms? Because they make up everything!",
+      "What do you call a bear with no teeth? A gummy bear!",
+      "Why don't skeletons fight each other? They don't have the guts!",
+      "What do you call a can opener that doesn't work? A can't opener!",
+      "Why don't oysters donate to charity? Because they're shellfish!",
+      "What do you call a sleeping bull? A bulldozer!",
+      "Why did the bicycle fall over? Because it was two-tired!",
+      "What do you call a boomerang that doesn't come back? A stick!",
+      "Why did the scarecrow win an award? He was outstanding in his field!",
+      "What do you call a pig that does karate? A pork chop!",
+      "Why don't scientists trust stairs? They're always up to something!",
+      "What do you call a fake stone in Irland? A sham rock!",
+      "Why don't eggs tell each other secrets? Because they'd crack up!",
+      "What do you call a bear with no ears? B!",
+      "Why don't skeletons fight each other? They don't have the guts!",
     ];
 
     return Scaffold(
@@ -1180,6 +1467,99 @@ class GlassCard extends StatelessWidget {
           child: child,
         ),
       ),
+    );
+  }
+}
+
+class JokeOfTheDayScreen extends StatelessWidget {
+  const JokeOfTheDayScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<JokeProvider>(
+      builder: (context, jokeProvider, child) {
+        return Column(
+          children: [
+            AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              title: Text(
+                'Joke of the Day',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Day Streak: ${jokeProvider.streakCount}',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      GlassCard(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            jokeProvider.jokeOfTheDay,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 18,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              jokeProvider.isFavorite(jokeProvider.jokeOfTheDay)
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            onPressed: () {
+                              jokeProvider
+                                  .toggleFavorite(jokeProvider.jokeOfTheDay);
+                            },
+                          ),
+                          const SizedBox(width: 20),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.share,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                            onPressed: () {
+                              jokeProvider.shareJokeOfTheDay();
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
