@@ -48,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Jokes For All',
+                'Jokes Up',
                 style: GoogleFonts.pacifico(
                   fontSize: 40,
                   color: Colors.white,

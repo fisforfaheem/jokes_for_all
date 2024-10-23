@@ -3,8 +3,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:jokes_for_all/faq.dart';
-import 'package:jokes_for_all/splash.dart';
+import 'package:jokes_up/faq.dart';
+import 'package:jokes_up/splash.dart';
 import 'dart:ui';
 
 import 'package:provider/provider.dart';
@@ -27,7 +27,7 @@ class OnboardingScreen extends StatelessWidget {
     return IntroductionScreen(
       pages: [
         PageViewModel(
-          title: "Welcome to Jokes For All",
+          title: "Welcome to Jokes Up",
           body: "Get ready for a daily dose of laughter!",
           image: const Center(child: Icon(Icons.emoji_emotions, size: 100.0)),
         ),
@@ -157,7 +157,7 @@ class JokeProvider extends ChangeNotifier {
   }
 
   void shareJokeOfTheDay() {
-    Share.share('Here\'s today\'s joke from Jokes For All:\n\n$_jokeOfTheDay');
+    Share.share('Here\'s today\'s joke from Jokes Up:\n\n$_jokeOfTheDay');
   }
 }
 
@@ -181,7 +181,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Jokes For All',
+      title: 'Jokes Up',
       theme: ThemeData.dark(),
       home: const SplashScreen(),
     );
@@ -262,7 +262,7 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Jokes For All',
+                  'Jokes Up',
                   style: GoogleFonts.poppins(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -406,7 +406,7 @@ final List<Map<String, dynamic>> _moreItems = [
     'color': Colors.orange,
     'onTap': (BuildContext context) {
       Share.share(
-        'Download Jokes For All app from Playstore: https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
+        'Download Jokes Up app from Playstore: https://play.google.com/store/apps/details?id=com.jokesup.app',
       );
     },
   },
@@ -415,7 +415,7 @@ final List<Map<String, dynamic>> _moreItems = [
     'icon': Icons.star_outline,
     'color': Colors.amber,
     'onTap': (BuildContext context) => launchUrlString(
-          'https://play.google.com/store/apps/details?id=com.example.jokes_for_all',
+          'https://play.google.com/store/apps/details?id= com.jokesup.app',
         ),
   },
   {
@@ -460,7 +460,7 @@ class AboutPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Jokes For All',
+                        'Jokes Up',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -564,7 +564,7 @@ class AboutPage extends StatelessWidget {
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
 
-  final String url = 'https://www.google.com';
+  final String url = 'https://sites.google.com/view/jokesup/home';
 
   @override
   Widget build(BuildContext context) {
@@ -671,7 +671,7 @@ class JokesForAll extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Jokes For All',
+      title: 'Jokes Up',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         textTheme: GoogleFonts.poppinsTextTheme(),
@@ -700,7 +700,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 50),
               Text(
-                'Jokes For All',
+                'Jokes Up',
                 style: GoogleFonts.pacifico(
                   fontSize: 40,
                   color: Colors.white,
@@ -1343,7 +1343,7 @@ class AboutScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text(
-                              'Jokes For All',
+                              'Jokes Up',
                               style: TextStyle(
                                   fontSize: 24,
                                   color: Colors.white,
@@ -1351,14 +1351,14 @@ class AboutScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 20),
                             const Text(
-                              'Jokes For All is your go-to app for a daily dose of laughter. Enjoy a curated collection of hilarious jokes, save your favorites, and share the joy with friends and family.',
+                              'Jokes Up is your go-to app for a daily dose of laughter. Enjoy a curated collection of hilarious jokes, save your favorites, and share the joy with friends and family.',
                               style:
                                   TextStyle(fontSize: 16, color: Colors.white),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 20),
                             const Text(
-                              '© 2024 Jokes For All',
+                              '© 2024 Jokes Up',
                               style: TextStyle(
                                   fontSize: 14, color: Colors.white70),
                             ),

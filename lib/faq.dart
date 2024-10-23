@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jokes_for_all/main.dart';
+import 'package:jokes_up/main.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 class FaqPage extends StatefulWidget {

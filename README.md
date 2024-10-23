@@ -1,4 +1,4 @@
-Jokes For All: Your Daily Dose of Laughter
+Jokes Up: Your Daily Dose of Laughter
 
 Dive into a world of humor with Jokes For All, the ultimate joke app that brings smiles to your face anytime, anywhere. Our sleek, modern design featuring stunning glassmorphism effects creates a visually captivating experience that's as delightful as the jokes themselves.
 
